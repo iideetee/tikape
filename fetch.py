@@ -14,7 +14,13 @@ def luo_tietokanta():
 	c.execute("CREATE TABLE Paketti (id INTEGER PRIMARY KEY, seurantaKoodi TEXT UNIQUE, asiakasId INT)")
 	c.execute("CREATE TABLE Tapahtuma (id INTEGER PRIMARY KEY, pakettiId INT, paikkaId INT, tapahtumaKuvaus TEXT, paivamaara TEXT)")
 	print("Tyhjät taulut luotu kantaan...")
-
+ 
+	createSecondaryIndex = "CREATE INDEX index_asiakas_nimi ON Asiakas(asiakasNimi)"
+	c.execute(createSecondaryIndex)
+ 
+	createSecondaryIndex = "CREATE INDEX index_seurantakoodi ON Paketti(seurantaKoodi)"
+	c.execute(createSecondaryIndex)
+	print("Indexit lisätty...")
 
 def nayta_toiminnot():
 	print("TOIMINNOT")
@@ -29,25 +35,44 @@ def nayta_toiminnot():
 	print("9. Suorita tietokannan tehokkuustesti")
 	print("10. Sulje ohjelma")
 
-def lisaa_paikka(paikka):
+def lisaa_paikka(paikka):	
 	c = db.cursor()
-	c.execute("INSERT INTO Paikka (paikkaNimi) VALUES (?)",[paikka])
-	print("Paikka lisätty")
+	c.execute("begin")
+	try:
+		c.execute("INSERT INTO Paikka (paikkaNimi) VALUES (?)",[paikka])
+		c.execute("commit")
+		print("Paikka lisätty!")
+	except sqlite3.Error:
+		print("Paikan lisäys ei onnistunut!")
+		c.execute("rollback")
+
  
 def lisaa_asiakas(asiakasNimi):
 	c = db.cursor()
-	c.execute("INSERT INTO Asiakas (asiakasNimi) VALUES (?)",[asiakasNimi])
-	print("Asiakas lisätty")
+	c.execute("begin")
+	try:
+		c.execute("INSERT INTO Asiakas (asiakasNimi) VALUES (?)",[asiakasNimi])
+		c.execute("commit")
+		print("Asiakas lisätty!")
+	except sqlite3.Error:
+		print("Asiakkaan lisäys ei onnistunut!")
+		c.execute("rollback")
  
 def lisaa_paketti(seurantaKoodi, asiakasNimi):
-    c = db.cursor()
-    c.execute("SELECT id FROM Asiakas WHERE asiakasNimi=?",[asiakasNimi])
-    asiakasId = c.fetchone()
-    if asiakasId != None:
-        c.execute("INSERT INTO Paketti (seurantaKoodi, asiakasId) VALUES (?,?)",[seurantaKoodi,asiakasId[0]])
-        print("Paketti asiakkaalle lisätty")
-    else:
-        print("Asiakasta ei löytynyt")
+	c = db.cursor()
+	c.execute("SELECT id FROM Asiakas WHERE asiakasNimi=?",[asiakasNimi])
+	asiakasId = c.fetchone()
+	if asiakasId != None:
+		c.execute("begin")
+		try:
+			c.execute("INSERT INTO Paketti (seurantaKoodi, asiakasId) VALUES (?,?)",[seurantaKoodi,asiakasId[0]])
+			c.execute("commit")
+			print("Paketti asiakkaalle lisätty")
+		except sqlite3.Error:
+			print("Paketin lisäys ei onnistunut!")
+			c.execute("rollback")
+	else:
+		print("Asiakasta ei löytynyt")
         
 def lisaa_tapahtuma(seurantaKoodi, paikka, kuvaus):
 	today = datetime.datetime.now()
@@ -66,8 +91,14 @@ def lisaa_tapahtuma(seurantaKoodi, paikka, kuvaus):
 	elif paikkaId == None:
 		print("Paikkaa ei löytynyt") 
 	else:
-		c.execute("INSERT INTO Tapahtuma (pakettiId, paikkaId, tapahtumaKuvaus, paivamaara) VALUES (?,?,?,?)",[pakettiId[0],paikkaId[0],kuvaus,d])
-		print("Tapahtuma lisätty")
+		c.execute("begin")
+		try:
+			c.execute("INSERT INTO Tapahtuma (pakettiId, paikkaId, tapahtumaKuvaus, paivamaara) VALUES (?,?,?,?)",[pakettiId[0],paikkaId[0],kuvaus,d])
+			c.execute("commit")
+			print("Tapahtuma lisätty")
+		except sqlite3.Error:
+			print("Paketin lisäys ei onnistunut!")
+			c.execute("rollback")
 
 def hae_tapahtumat(seurantaKoodi):
     c = db.cursor()
@@ -81,29 +112,12 @@ def hae_tapahtumat(seurantaKoodi):
             
 def hae_paketit(nimi):
 	c = db.cursor()
-    
-	c.execute("SELECT id FROM Asiakas WHERE asiakasNimi=?",[nimi])
-	asiakasId = c.fetchone()
- 
-	c.execute("SELECT id ,seurantaKoodi FROM Paketti WHERE asiakasId=?",[asiakasId[0]])
-	data = c.fetchall()
-	for d in data:
-		PakettiId = d[0]
-		seurantaKoodi = d[1]
-		c.execute("SELECT COUNT(Tapahtuma.id) FROM Tapahtuma WHERE pakettiId=? ",[PakettiId])
-		total = c.fetchone()
-		if total == None:
-			print("Tapahtumia ei löytynyt")
-		else:
-			print(seurantaKoodi,",",total[0],"tapahtumaa")
-      
-
-	#c.execute("SELECT Paketti.seurantaKoodi, COUNT(Tapahtuma.id) FROM Asiakas A LEFT JOIN Paketti ON Paketti.asiakasId=A.id LEFT JOIN Tapahtuma ON Paketti.id=Tapahtuma.pakettiId WHERE A.asiakasNimi=? GROUP BY Paketti.seurantaKoodi",[nimi])
-	#total = c.fetchone()
-	#if total == None:
-	#	print("Tapahtumia ei löytynyt")
-	#else:
-	#	print(seurantaKoodi,",",total[0],"tapahtumaa")
+	c.execute("SELECT Paketti.seurantaKoodi, COUNT(Tapahtuma.id) FROM Asiakas A JOIN Paketti ON Paketti.asiakasId=A.id JOIN Tapahtuma ON Paketti.id=Tapahtuma.pakettiId WHERE A.asiakasNimi=? GROUP BY Paketti.seurantaKoodi",[nimi])
+	total = c.fetchone()
+	if total == None:
+		print("Tapahtumia ei löytynyt")
+	else:
+		print(total[0],",",total[1],"tapahtumaa")
         
 def hae_tapahtumat_pvm(paikka,pvm):
     c = db.cursor()
@@ -116,7 +130,6 @@ def hae_tapahtumat_pvm(paikka,pvm):
             print("Tapahtumien määrä:",tapahtuma[0])
    
 def aja_tehokkuustesti():
-
 	c = db.cursor()
  
 	start = time()
@@ -127,6 +140,7 @@ def aja_tehokkuustesti():
 		c.execute("commit")
 	except sqlite3.Error:
 		print("Paikkojen lisäys ei onnistunut!")
+		c.execute("rollback")
   
 	stop = time()
 	print("Lisätty 1000 paikkaa. Aikaa kului",stop-start,"sekuntia")
@@ -139,6 +153,7 @@ def aja_tehokkuustesti():
 		c.execute("commit")
 	except sqlite3.Error:
 		print("Asiakkaiden lisäys ei onnistunut!")
+		c.execute("rollback")
   
 	stop = time()
 	print("Lisätty 1000 asiakasta. Aikaa kului",stop-start,"sekuntia")
@@ -151,6 +166,7 @@ def aja_tehokkuustesti():
 		c.execute("commit")
 	except sqlite3.Error:
 		print("Pakettien lisäys ei onnistunut!")
+		c.execute("rollback")
   
   
 	stop = time()
@@ -167,27 +183,21 @@ def aja_tehokkuustesti():
 		c.execute("commit")
 	except sqlite3.Error:
 		print("Pakettien lisäys ei onnistunut!")
+		c.execute("rollback")
             
 	stop = time()
 	print("Lisätty 1000000 tapahtumaa. Aikaa kului",stop-start,"sekuntia")
  
 	start = time()
-	for value in range(1000): 
-		c.execute("SELECT id ,seurantaKoodi FROM Paketti WHERE asiakasId=?",[random.randrange(1000)])
-		data = c.fetchall()
-		for d in data:
-			PakettiId = d[0]
-			seurantaKoodi = d[1]
-			c.execute("SELECT COUNT(Tapahtuma.id) FROM Tapahtuma WHERE pakettiId=? ",[PakettiId])
-
-		#c.execute("SELECT Paketti.seurantaKoodi, COUNT(Tapahtuma.id) FROM Asiakas A LEFT JOIN Paketti ON Paketti.asiakasId=A.id LEFT JOIN Tapahtuma ON Paketti.id=Tapahtuma.pakettiId WHERE A.id=? GROUP BY Paketti.seurantaKoodi",[value])
+	for value in range(1000):
+		c.execute("SELECT Paketti.seurantaKoodi, COUNT(Tapahtuma.id) FROM Asiakas A JOIN Paketti ON Paketti.asiakasId=A.id JOIN Tapahtuma ON Paketti.id=Tapahtuma.pakettiId WHERE A.id=? GROUP BY Paketti.seurantaKoodi",[value])
      
 	stop = time()
 	print("Haettu asiakkaan 1000 tapahtumaa. Aikaa kului",stop-start,"sekuntia")
  
 	start = time()
 	for value in range(1000):
-		c.execute("SELECT * FROM Tapahtuma LEFT JOIN Paketti ON Paketti.id=Tapahtuma.pakettiId LEFT JOIN Paikka ON Paikka.id=Tapahtuma.paikkaId WHERE Paketti.id=?",[value])
+		c.execute("SELECT * FROM Tapahtuma JOIN Paketti ON Paketti.id=Tapahtuma.pakettiId JOIN Paikka ON Paikka.id=Tapahtuma.paikkaId WHERE Paketti.id=?",[value])
      
 	stop = time()
 	print("Haettu 1000 paketin tapahtumaa. Aikaa kului",stop-start,"sekuntia")
@@ -206,26 +216,17 @@ while True:
 	elif selection == "2":
 		print("Anna paikan nimi:")
 		paikka = input()
-		try:
-			lisaa_paikka(paikka)
-		except sqlite3.IntegrityError:
-			print("Kyseinen paikka löytyy jo tietokannasta")
+		lisaa_paikka(paikka)
 	elif selection == "3":
 		print("Anna asiakkaan nimi:")
 		asiakasNimi = input()
-		try:
-			lisaa_asiakas(asiakasNimi)
-		except sqlite3.IntegrityError:
-			print("Kyseinen nimi löytyy jo tietokannasta")
+		lisaa_asiakas(asiakasNimi)
 	elif selection == "4":
 		print("Anna paketin seurantakoodi:")
 		seurantaKoodi = input()
 		print("Anna asiakkaan nimi:")
 		asiakasNimi = input()
-		try:
-			lisaa_paketti(seurantaKoodi,asiakasNimi)
-		except sqlite3.IntegrityError:
-			print("Samalla seurantakoodilla oleva paketti on jo järjestelmässä")
+		lisaa_paketti(seurantaKoodi,asiakasNimi)
 	elif selection == "5":
 		print("Anna paketin seurantakoodi:")
 		seurantaKoodi = input()
@@ -233,38 +234,23 @@ while True:
 		paikka = input()
 		print("Anna tapahtuman kuvaus:")
 		kuvaus = input()
-		try:
-			lisaa_tapahtuma(seurantaKoodi,paikka,kuvaus)
-		except sqlite3.Error as e:
-			print(type(e).__name__) 
+		lisaa_tapahtuma(seurantaKoodi,paikka,kuvaus)
 	elif selection == "6":
 		print("Anna paketin seurantakoodi:")
 		seurantaKoodi = input()
-		try:
-			hae_tapahtumat(seurantaKoodi)
-		except sqlite3.Error as e:
-			print(type(e).__name__) 
+		hae_tapahtumat(seurantaKoodi) 
 	elif selection == "7":
 		print("Anna asiakkaan nimi:")
 		nimi = input()
-		try:
-			hae_paketit(nimi)
-		except sqlite3.Error as e:
-			print(type(e).__name__) 
+		hae_paketit(nimi)
 	elif selection == "8":
 		print("Anna paikan nimi:")
 		paikka = input()
 		print("Anna päivämäärä:")
 		pvm = input()
-		try:
-			hae_tapahtumat_pvm(paikka,pvm)	
-		except sqlite3.Error as e:
-			print(type(e).__name__) 
+		hae_tapahtumat_pvm(paikka,pvm)	
 	elif selection == "9":
-		try:
-			aja_tehokkuustesti()
-		except sqlite3.Error as e:
-			print(type(e).__name__) 
+		aja_tehokkuustesti()
 	elif selection == "10":
 		print("Bye!")
 		break

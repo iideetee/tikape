@@ -1,9 +1,3 @@
-Lisätty 1000 paikkaa. Aikaa kului 2.09360671043396 sekuntia
-Lisätty 1000 asiakasta. Aikaa kului 2.082627534866333 sekuntia
-Lisätty 1000 pakettia. Aikaa kului 2.073976516723633 sekuntia
-Lisätty 1000000 tapahtumaa. Aikaa kului 2152.559765815735 sekuntia
-
-iideetee@Megamylly:~/Documents/harkkatyo$ python3 fetch.py 
 TOIMINNOT
 1. Luo tietokanta
 2. Lisää uusi paikka
@@ -20,36 +14,11 @@ Valitse toiminto:
 Tyhjät taulut luotu kantaan...
 Valitse toiminto:
 9
-Lisätty 1000 paikkaa. Aikaa kului 0.008248329162597656 sekuntia
-Lisätty 1000 asiakasta. Aikaa kului 0.0056912899017333984 sekuntia
-Lisätty 1000 pakettia. Aikaa kului 0.006200313568115234 sekuntia
-Lisätty 1000000 tapahtumaa. Aikaa kului 7.7012779712677 sekuntia
-Haettu asiakkaan 1000 tapahtumaa. Aikaa kului 2365.7809658050537 sekuntia
-Haettu 1000 paketin tapahtumaa. Aikaa kului 0.08506655693054199 sekuntia
-Valitse toiminto:
-
-
-TOIMINNOT
-1. Luo tietokanta
-2. Lisää uusi paikka
-3. Lisää uusi asiakas
-4. Lisää uusi paketti
-5. Lisää uusi tapahtuma
-6. Hae paketin tapahtumat
-7. Hae paketit ja tapahtumien määrä
-8. Hae paikan tapahtumien määrä tiettynä päivänä
-9. Suorita tietokannan tehokkuustesti
-10. Sulje ohjelma
-Valitse toiminto:
-1
-Tyhjät taulut luotu kantaan...
-Valitse toiminto:
-9
-Lisätty 1000 paikkaa. Aikaa kului 0.009560346603393555 sekuntia
-Lisätty 1000 asiakasta. Aikaa kului 0.006155967712402344 sekuntia
-Lisätty 1000 pakettia. Aikaa kului 0.006315946578979492 sekuntia
-Lisätty 1000000 tapahtumaa. Aikaa kului 7.186120271682739 sekuntia
-Haettu asiakkaan 1000 tapahtumaa. Aikaa kului 52.76992058753967 sekuntia
-Haettu 1000 paketin tapahtumaa. Aikaa kului 0.2749965190887451 sekuntia
+Lisätty 1000 paikkaa. Aikaa kului 0.005888223648071289 sekuntia
+Lisätty 1000 asiakasta. Aikaa kului 0.005774259567260742 sekuntia
+Lisätty 1000 pakettia. Aikaa kului 0.006159305572509766 sekuntia
+Lisätty 1000000 tapahtumaa. Aikaa kului 6.53112530708313 sekuntia
+Haettu asiakkaan 1000 tapahtumaa. Aikaa kului 230.20000314712524 sekuntia
+Haettu 1000 paketin tapahtumaa. Aikaa kului 0.05662178993225098 sekuntia
 Valitse toiminto:
 
